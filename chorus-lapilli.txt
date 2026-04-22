@@ -1,0 +1,108 @@
+Chorus Lapilli Lab Notebook
+============================
+
+Goal: Modify the tic-tac-toe game to support chorus lapilli (a variation of terni lapilli).
+The rules differ from standard tic-tac-toe in two key ways:
+  1. Once each player has placed their 3 pieces, you stop placing new ones. 
+  Instead, each turn becomes a move where you slide one of your pieces to an adjacent empty square (including diagonals).
+  2. If it’s your turn, you already have 3 pieces on the board, and one of them is in the center (index 4), then your move must either win the game or move that center piece out.
+
+Starting point: completed tic-tac-toe in src/App.jsx.
+
+Step 1: Track current player's piece count
+-------------------------------------------
+I counted the number of X’s and O’s on the board by filtering the squares array. 
+From that, I determined whose turn it is and whether they’re still placing pieces or have moved into the sliding phase.
+
+  const xCount = squares.filter(s => s === 'X').length;
+  const oCount = squares.filter(s => s === 'O').length;
+  const currentPlayer = isXNext ? 'X' : 'O';
+  const currentPlayerCount = isXNext ? xCount : oCount;
+  const isMovingPhase = currentPlayerCount >= 3;
+
+If a player has fewer than 3 pieces, they place a new one like normal tic-tac-toe. 
+Once they hit 3, all future turns are moves.
+
+Step 2: Add selectedSquare state for the two-click move interface
+-----------------------------------------------------------------
+Since moving requires two clicks (select → destination), I added a new piece of state:
+
+  const [selectedSquare, setSelectedSquare] = React.useState(null);
+
+If selectedSquare is null, no piece has been chosen yet.
+I wrote a helper function to check if two squares are adjacent. This includes all 8 directions (horizontal, vertical, diagonal).
+
+  function isAdjacent(from, to) {
+    const fromRow = Math.floor(from / 3), fromCol = from % 3;
+    const toRow   = Math.floor(to   / 3), toCol   = to   % 3;
+    return Math.abs(fromRow - toRow) <= 1 &&
+           Math.abs(fromCol - toCol) <= 1 &&
+           from !== to;
+  }
+
+Step 4: Update handleClick for both phases
+-------------------------------------------
+Placement phase (isMovingPhase === false):
+  - Works exactly like normal tic-tac-toe: click an empty square to place your piece.
+
+Moving phase (isMovingPhase === true):
+  First click (selectedSquare === null):
+    - Select one of your own pieces. If you click anything else, ignore it.
+
+  Second click (selectedSquare !== null):
+    - The destination must be empty and adjacent.
+    - If it’s not valid, reset the selection and do nothing.
+    - If the center rule applies (see next step), enforce it before allowing the move.
+    - Otherwise, apply the move and switch turns.
+
+Step 5: Center constraint implementation
+-----------------------------------------
+After confirming the move is adjacent and the destination is empty, I simulate the move and check:
+
+  if (squares[4] === currentPlayer) {
+    const wouldWin = calculateWinner(nextSquares) === currentPlayer;
+    const vacatesCenter = selectedSquare === 4;
+    if (!wouldWin && !vacatesCenter) {
+      setSelectedSquare(null);
+      return;   // invalid: center constraint violated
+    }
+  }
+
+  setSquares(nextSquares);
+  setSelectedSquare(null);
+  setIsXNext(!isXNext);
+
+So if your piece is in the center, your move must either win or move that center piece out.
+
+Step 6: Visual feedback for selected piece
+------------------------------------------
+To make it clear which piece is selected, I passed an isSelected prop into each square. 
+If true, it adds a CSS class:
+
+  .square.selected { background: #ffe066; }
+
+This highlights the selected piece during the move phase.
+
+Step 7: Update status message
+------------------------------
+The status display stays simple:
+  - "Winner: X" when the game ends
+  - "Next player: X" otherwise
+
+This works for both placement and movement phases.
+
+Step 8: Testing
+----------------
+I added Selenium tests in test_chorus_lapilli.py to cover key behaviors:
+
+  - No moves allowed after the game is won
+  - Players alternate turns correctly
+  - Occupied squares can’t be overwritten
+  - Invalid move attempts reset selection and don’t change the board
+
+Ran tests with `./helper test` to verify correct behavior.
+
+Final Result:
+The game now fully supports chorus lapilli. It starts like standard tic-tac-toe, but once each player has 3 pieces, it shifts into a movement-based game using two-click interactions.
+Invalid moves (non-adjacent, occupied squares, or violating the center rule) are ignored and reset the selection. The original winner detection works unchanged.
+Overall, the transition from placement to movement feels smooth, and the rules are enforced correctly.

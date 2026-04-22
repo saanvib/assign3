@@ -1,0 +1,91 @@
+Tic-Tac-Toe Lab Notebook
+========================
+
+Goal: Build a working tic-tac-toe game in src/App.jsx by following the React tutorial.
+
+Environment
+-----------
+- Using Node.js v22, npm, and Vite (already set up in the starter code)
+- Ran ./helper init to install dependencies into node_modules/
+- Started the dev server with ./helper dev (runs at http://localhost:5173)
+- Did all the work in src/App.jsx; styles were already defined in src/styles.css
+
+Step 1: Replace starter App with Square component
+--------------------------------------------------
+I removed the default starter UI and replaced it with a simple Square component. 
+It just renders a button with the "square" class, which was already styled in the CSS.
+
+  function Square({ value }) {
+    return <button className="square">{value}</button>;
+  }
+
+Step 2: Add click handler via onSquareClick prop
+-------------------------------------------------
+Next, I added an onSquareClick prop so each square can respond to clicks.
+
+  function Square({ value, onSquareClick }) {
+    return (
+      <button className="square" onClick={onSquareClick}>
+        {value}
+      </button>
+    );
+  }
+
+Step 3: Add Board component with state
+---------------------------------------
+I created a Board component to manage the game state. It keeps track of:
+  - the board (squares, an array of 9 values)
+  - whose turn it is (isXNext)
+
+  const [squares, setSquares] = React.useState(Array(9).fill(null));
+  const [isXNext, setIsXNext] = React.useState(true);
+
+Step 4: Implement handleClick
+------------------------------
+I implemented handleClick(i) to update the board when a square is clicked:
+  - If the square is already filled, do nothing
+  - Otherwise, copy the board, place an 'X' or 'O', and update state
+  
+  function handleClick(i) {
+    if (squares[i]) return;
+    const nextSquares = squares.slice();
+    nextSquares[i] = isXNext ? 'X' : 'O';
+    setSquares(nextSquares);
+    setIsXNext(!isXNext);
+  }
+
+Step 5: Detect a winner
+-----------------------------------
+I added a calculateWinner helper that checks all 8 possible winning combinations (rows, columns, diagonals). 
+It returns 'X', 'O', or null.
+
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+I used this inside handleClick to stop the game if someone has already won.
+
+Step 6: Add status display
+---------------------------
+I added a status message above the board:
+  - "Winner: X" if someone wins
+  - "Next player: O" otherwise
+
+This updates dynamically based on the game state.
+
+Step 7: Render the board
+-------------------------------------------------
+Finally, I rendered the board as three rows, each with three Square components. Each square gets:
+  - its value (X, O, or null)
+  - a click handler like () => handleClick(i)
+
+Final Result: 
+The result is a fully working tic-tac-toe game:
+  - Players can click to place X’s and O’s
+  - Turns alternate correctly
+  - The game detects winners
+  - Clicking a filled square (or after the game ends) does nothing
+
+The Vite dev server hot-reloads on save, which made it easy to test changes quickly.

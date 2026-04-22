@@ -75,6 +75,10 @@ ul {
   display: table;
 }
 
+.square.selected {
+  background: #ffe066;
+}
+
 .status {
   margin-bottom: 10px;
 }

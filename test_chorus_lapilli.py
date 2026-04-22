@@ -155,6 +155,51 @@ class TestChorusLapilli(unittest.TestCase):
         tiles[0].click()
         self.assertTileIs(tiles[0], self.SYMBOL_X)
 
+    def test_no_more_moves_after_win(self):
+        '''Check that clicking tiles does nothing after a player wins.'''
+        tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+        # X takes top row (0,1,2); O takes 3,4 - X wins after tile 2
+        tiles[0].click()  # X
+        tiles[3].click()  # O
+        tiles[1].click()  # X
+        tiles[4].click()  # O
+        tiles[2].click()  # X wins with 0,1,2
+        # Click an empty tile - must remain empty
+        tiles[5].click()
+        self.assertTileIs(tiles[5], self.SYMBOL_BLANK)
+
+    def test_player_alternation(self):
+        '''Check that X and O alternate on each click.'''
+        tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+        tiles[0].click()  # X
+        tiles[1].click()  # O
+        self.assertTileIs(tiles[0], self.SYMBOL_X)
+        self.assertTileIs(tiles[1], self.SYMBOL_O)
+
+    def test_no_overwrite_occupied_tile(self):
+        '''Check that clicking an already-occupied tile does not change it.'''
+        tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+        tiles[0].click()  # X placed at 0
+        tiles[0].click()  # O tries to click same tile - should be ignored
+        self.assertTileIs(tiles[0], self.SYMBOL_X)
+
+    def test_move_phase_invalid_destination_reverts(self):
+        '''Check that an invalid move destination in move phase clears selection.'''
+        tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+        # Place X at 0,1,3 and O at 2,5,7 (no winner)
+        tiles[0].click()  # X
+        tiles[2].click()  # O
+        tiles[1].click()  # X
+        tiles[5].click()  # O
+        tiles[3].click()  # X - 3 pieces placed, enters move phase
+        tiles[7].click()  # O - 3 pieces placed
+        # X is in move phase. Select X at 0, then click tile 8 (not adjacent to 0)
+        tiles[0].click()  # select X at 0
+        tiles[8].click()  # invalid: not adjacent, should revert
+        # X at 0 must still be there and 8 must still be empty
+        self.assertTileIs(tiles[0], self.SYMBOL_X)
+        self.assertTileIs(tiles[8], self.SYMBOL_BLANK)
+
 
 # ================= [DO NOT MAKE ANY CHANGES BELOW THIS LINE] =================
 
